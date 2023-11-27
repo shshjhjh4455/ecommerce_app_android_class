@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'sales_list_screen.dart'; // 판매 글 목록 화면 import
+import 'package:firebase_auth/firebase_auth.dart';
+import 'sales_list_screen.dart'; // 판매 글 목록 화면
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,6 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
@@ -21,11 +23,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     _formKey.currentState!.save();
     try {
+      // Firebase 인증을 사용하여 로그인
+      await _auth.signInWithEmailAndPassword(
+          email: _email, password: _password);
+      // 로그인 성공 시, 판매 글 목록 화면으로 이동
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const SalesListScreen()),
       );
-    } catch (e) {
-      // 에러 처리
+    } on FirebaseAuthException catch (e) {
+      // Firebase 인증 에러 처리
+      final snackBar = SnackBar(content: Text('로그인 실패: ${e.message}'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 

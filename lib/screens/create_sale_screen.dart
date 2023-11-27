@@ -1,9 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
 
 class CreateSaleScreen extends StatefulWidget {
   const CreateSaleScreen({super.key});
@@ -19,43 +16,24 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
   final _descriptionController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  File? _imageFile;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<String> _uploadImage(File image) async {
-    String fileName =
-        'sales/${DateTime.now().millisecondsSinceEpoch}_${image.path.split('/').last}';
-    UploadTask uploadTask =
-        FirebaseStorage.instance.ref(fileName).putFile(image);
-
-    TaskSnapshot snapshot = await uploadTask;
-    return await snapshot.ref.getDownloadURL();
-  }
 
   void _createSale() async {
     if (_formKey.currentState!.validate()) {
-      String imageUrl = '';
-      if (_imageFile != null) {
-        imageUrl = await _uploadImage(_imageFile!);
+      try {
+        await _firestore.collection('sales').add({
+          'title': _titleController.text,
+          'price': int.parse(_priceController.text),
+          'description': _descriptionController.text,
+          'seller': _auth.currentUser?.email,
+          'isSold': false,
+        });
+
+        // Firestore에 저장 후, 판매 글 목록 화면으로 이동
+        Navigator.of(context).pushReplacementNamed('/salesList');
+      } catch (e) {
+        // 에러 처리: 예를 들어, 에러 메시지를 표시할 수 있습니다.
+        // 예: showDialog()를 사용하여 사용자에게 에러 메시지를 보여줍니다.
       }
-      await _firestore.collection('sales').add({
-        'title': _titleController.text,
-        'price': int.parse(_priceController.text),
-        'description': _descriptionController.text,
-        'seller': _auth.currentUser?.email,
-        'isSold': false,
-        'imageUrl': imageUrl,
-      });
-      Navigator.pop(context);
     }
   }
 
@@ -72,12 +50,6 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
             key: _formKey,
             child: Column(
               children: <Widget>[
-                // 이미지 선택 및 표시
-                if (_imageFile != null) Image.file(_imageFile!, height: 200),
-                ElevatedButton(
-                  onPressed: _pickImage,
-                  child: const Text('이미지 선택'),
-                ),
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: '제목'),
