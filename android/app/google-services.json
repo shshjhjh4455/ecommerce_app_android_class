@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "685041867247",
+    "project_id": "android-class-f9010",
+    "storage_bucket": "android-class-f9010.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:685041867247:android:723020db0be0fd4afabe1a",
+        "android_client_info": {
+          "package_name": "com.example.ecommerce_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8sRFEKFY3YdQXjCnkci2FRf1Y3FQ7wXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
