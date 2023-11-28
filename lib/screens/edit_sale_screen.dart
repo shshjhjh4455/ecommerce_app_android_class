@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class EditSaleScreen extends StatefulWidget {
   final Map<String, dynamic> saleData;
 
-  const EditSaleScreen({super.key, required this.saleData});
+  const EditSaleScreen({Key? key, required this.saleData}) : super(key: key);
 
   @override
   _EditSaleScreenState createState() => _EditSaleScreenState();
@@ -24,19 +24,27 @@ class _EditSaleScreenState extends State<EditSaleScreen> {
     _isSold = widget.saleData['isSold'] ?? false;
   }
 
-  void _saveSale() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        // Firestore 문서 업데이트
-        await _firestore.collection('sales').doc(widget.saleData['id']).update({
-          'price': int.parse(_priceController.text),
-          'isSold': _isSold,
-        });
-        Navigator.of(context).pop(); // 이전 화면으로 돌아가기
-      } catch (e) {
-        // 에러 처리: 예를 들어, 사용자에게 에러 메시지를 보여줄 수 있습니다.
-        print(e); // 콘솔에 에러 출력
+  Future<void> _saveSale() async {
+    final isValid = _formKey.currentState!.validate();
+    if (!isValid) {
+      return; // 폼이 유효하지 않으면 저장하지 않음
+    }
+
+    try {
+      // Firestore 문서 업데이트
+      String docId = widget.saleData['id'];
+      if (docId.isEmpty) {
+        throw Exception('문서 ID가 없습니다.');
       }
+      await _firestore.collection('sales').doc(docId).update({
+        'price': int.parse(_priceController.text),
+        'isSold': _isSold,
+      });
+      Navigator.of(context).pop(); // 성공적으로 업데이트 후 이전 화면으로 돌아가기
+    } catch (e) {
+      // 에러 처리
+      final snackBar = SnackBar(content: Text('저장 실패: ${e.toString()}'));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 

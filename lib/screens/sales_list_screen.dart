@@ -48,6 +48,8 @@ class _SalesListScreenState extends State<SalesListScreen> {
             children: snapshot.data!.docs.map((DocumentSnapshot document) {
               Map<String, dynamic> data =
                   document.data()! as Map<String, dynamic>;
+              data['id'] = document.id; // 문서 ID를 데이터 맵에 추가
+
               return ListTile(
                 title: Text(data['title']),
                 subtitle: Text(
