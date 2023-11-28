@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_sale_screen.dart'; // 판매 글 수정 화면
+import 'chat_screen.dart'; // 채팅 화면
 
 class SalesDetailScreen extends StatefulWidget {
   final Map<String, dynamic> saleData;
@@ -34,8 +34,32 @@ class _SalesDetailScreenState extends State<SalesDetailScreen> {
     }
   }
 
+  void _navigateToChatScreen() {
+    User? currentUser = _auth.currentUser;
+    String chatRoomId =
+        _generateChatRoomId(currentUser?.email, widget.saleData['seller']);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(chatRoomId: chatRoomId),
+      ),
+    );
+  }
+
+  String _generateChatRoomId(String? user1, String? user2) {
+    // 둘 중 하나라도 null이면 기본 채팅방 ID 반환
+    if (user1 == null || user2 == null) {
+      return 'default_chat_room';
+    }
+
+    // 둘 다 null이 아니면 고유한 채팅방 ID 생성
+    return user1.compareTo(user2) > 0 ? '${user1}_$user2' : '${user2}_$user1';
+  }
+
   @override
   Widget build(BuildContext context) {
+    User? currentUser = _auth.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.saleData['title']),
@@ -60,6 +84,11 @@ class _SalesDetailScreenState extends State<SalesDetailScreen> {
               Text('판매자: ${widget.saleData['seller']}'),
               const SizedBox(height: 16),
               Text('내용: ${widget.saleData['description']}'),
+              if (currentUser?.email != widget.saleData['seller'])
+                ElevatedButton(
+                  onPressed: _navigateToChatScreen,
+                  child: const Text('판매자에게 메시지 보내기'),
+                ),
             ],
           ),
         ),

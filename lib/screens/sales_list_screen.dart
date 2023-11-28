@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'create_sale_screen.dart';
 import 'sales_detail_screen.dart';
+import 'chat_management_screen.dart'; // 채팅 관리 화면 import
 
 class SalesListScreen extends StatefulWidget {
-  const SalesListScreen({super.key});
+  const SalesListScreen({Key? key}) : super(key: key);
 
   @override
   _SalesListScreenState createState() => _SalesListScreenState();
@@ -48,7 +49,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
             children: snapshot.data!.docs.map((DocumentSnapshot document) {
               Map<String, dynamic> data =
                   document.data()! as Map<String, dynamic>;
-              data['id'] = document.id; // 문서 ID를 데이터 맵에 추가
+              data['id'] = document.id;
 
               return ListTile(
                 title: Text(data['title']),
@@ -67,14 +68,31 @@ class _SalesListScreenState extends State<SalesListScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // 판매 글 작성 화면으로 이동
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const CreateSaleScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) => const ChatManagementScreen()),
+              );
+            },
+            heroTag: 'chat',
+            child: const Icon(Icons.chat),
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) => const CreateSaleScreen()),
+              );
+            },
+            heroTag: 'add',
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
     );
   }
