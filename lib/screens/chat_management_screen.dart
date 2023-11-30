@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart'; // 날짜 및 시간 형식을 위한 패키지
 
 class ChatManagementScreen extends StatefulWidget {
   const ChatManagementScreen({super.key});
@@ -32,11 +33,17 @@ class _ChatManagementScreenState extends State<ChatManagementScreen> {
     }
   }
 
+  String _formatTimestamp(Timestamp timestamp) {
+    var date = timestamp.toDate();
+    return DateFormat('yyyy-MM-dd – HH:mm').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('받은 메시지'),
+        backgroundColor: Colors.blueGrey,
       ),
       body: _messagesStream == null
           ? const Center(child: Text('로그인 정보를 확인해주세요.'))
@@ -44,8 +51,8 @@ class _ChatManagementScreenState extends State<ChatManagementScreen> {
               stream: _messagesStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return Text('오류가 발생했습니다: ${snapshot.error}');
                   print('StreamBuilder 오류: ${snapshot.error}');
+                  return Text('오류가 발생했습니다: ${snapshot.error}');
                 }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -58,10 +65,24 @@ class _ChatManagementScreenState extends State<ChatManagementScreen> {
                       snapshot.data!.docs.map((DocumentSnapshot document) {
                     Map<String, dynamic> data =
                         document.data()! as Map<String, dynamic>;
-                    return ListTile(
-                      title: Text(data['message'] ?? '메시지 없음'),
-                      subtitle:
-                          Text('보낸 사람: ${data['buyerEmail'] ?? '알 수 없음'}'),
+                    String formattedTime = _formatTimestamp(data['timestamp']);
+                    return Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      child: ListTile(
+                        title: Text(
+                          data['message'] ?? '메시지 없음',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('보낸 사람: ${data['buyerEmail'] ?? '알 수 없음'}'),
+                            Text('시간: $formattedTime'),
+                          ],
+                        ),
+                      ),
                     );
                   }).toList(),
                 );

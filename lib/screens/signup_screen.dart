@@ -13,6 +13,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
+  String _name = '';
+  String _birthDate = '';
 
   void _trySignUp() async {
     final isValid = _formKey.currentState!.validate();
@@ -25,11 +27,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: _email, password: _password);
       if (userCredential.user != null) {
+        // 추가: 사용자 이름 및 생년월일 정보 저장 로직 구현 필요
+
         // 회원가입 성공 후, 판매 글 목록 페이지로 이동
         Navigator.of(context).pushReplacementNamed('/salesList');
       }
     } catch (e) {
       // 에러 처리
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     }
   }
 
@@ -63,6 +70,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 validator: (value) {
                   if (value!.isEmpty || value.length < 6) {
                     return '6자 이상의 비밀번호를 입력해주세요.';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: '이름'),
+                onSaved: (value) => _name = value!,
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return '이름을 입력해주세요.';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: '생년월일 (YYYYMMDD)'),
+                keyboardType: TextInputType.number,
+                onSaved: (value) => _birthDate = value!,
+                validator: (value) {
+                  if (value!.isEmpty ||
+                      value.length != 8 ||
+                      !RegExp(r'^\d{8}$').hasMatch(value)) {
+                    return '8자리 숫자의 생년월일을 입력해주세요.';
                   }
                   return null;
                 },
