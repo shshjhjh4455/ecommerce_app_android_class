@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_sale_screen.dart'; // 판매 글 수정 화면
-import 'chat_screen.dart'; // 채팅 화면
 
 class SalesDetailScreen extends StatefulWidget {
   final Map<String, dynamic> saleData;
@@ -13,7 +13,8 @@ class SalesDetailScreen extends StatefulWidget {
 }
 
 class _SalesDetailScreenState extends State<SalesDetailScreen> {
-  final _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -34,26 +35,44 @@ class _SalesDetailScreenState extends State<SalesDetailScreen> {
     }
   }
 
-  void _navigateToChatScreen() {
-    User? currentUser = _auth.currentUser;
-    String chatRoomId =
-        _generateChatRoomId(currentUser?.email, widget.saleData['seller']);
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ChatScreen(chatRoomId: chatRoomId),
-      ),
+  void _sendMessageToSeller() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        TextEditingController messageController = TextEditingController();
+        return AlertDialog(
+          title: const Text('메시지 보내기'),
+          content: TextField(
+            controller: messageController,
+            decoration: const InputDecoration(hintText: "여기에 메시지를 입력하세요"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('보내기'),
+              onPressed: () async {
+                String message = messageController.text;
+                if (message.isNotEmpty) {
+                  await _firestore.collection('messages').add({
+                    'sellerEmail': widget.saleData['seller'],
+                    'buyerEmail': _auth.currentUser?.email,
+                    'message': message,
+                    'saleId': widget.saleData['id'], // 판매 글의 ID
+                    'timestamp': FieldValue.serverTimestamp(),
+                  });
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
-  }
-
-  String _generateChatRoomId(String? user1, String? user2) {
-    // 둘 중 하나라도 null이면 기본 채팅방 ID 반환
-    if (user1 == null || user2 == null) {
-      return 'default_chat_room';
-    }
-
-    // 둘 다 null이 아니면 고유한 채팅방 ID 생성
-    return user1.compareTo(user2) > 0 ? '${user1}_$user2' : '${user2}_$user1';
   }
 
   @override
@@ -86,7 +105,7 @@ class _SalesDetailScreenState extends State<SalesDetailScreen> {
               Text('내용: ${widget.saleData['description']}'),
               if (currentUser?.email != widget.saleData['seller'])
                 ElevatedButton(
-                  onPressed: _navigateToChatScreen,
+                  onPressed: _sendMessageToSeller,
                   child: const Text('판매자에게 메시지 보내기'),
                 ),
             ],
